@@ -38,8 +38,6 @@ import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFactory;
 class SQLGenerator extends VoidVisitorAdapter<Set<String>> {
 	static final Logger logger = LoggerFactory.getLogger(SQLGenerator.class);
 	private static final String UNKNOWN = "Unknown";
-	private static final List<String> fileTypes = List.of("FORM", "VO", "ACTION", "MODEL", "DAO", "BD",
-			"SERVICE");
 	private static final String FILE_CALLBACK_ORDER = "file {} callback order: {} on event: {}";
 	private final Set<String> ipmortSet = new HashSet<>();
 	private final Set<String> relationSet = new HashSet<>();
@@ -54,12 +52,14 @@ class SQLGenerator extends VoidVisitorAdapter<Set<String>> {
 	private String filePath;
 	private String packageName = "";
 	private String className;
+	private FileTypeDeclear fileTypeDeclear;
 
 	public SQLGenerator(TypeSolver typeSolver, int targetTables, List<SourceDir> srcDirs, Set<String> skipSet) {
 		this.targetTables = targetTables;
 		this.javaParserFacade = JavaParserFacade.get(typeSolver);
 		this.srcDirs = srcDirs;
 		this.skipSet = skipSet;
+		this.fileTypeDeclear = new FileTypeDeclear(typeSolver);
 	}
 
 	@Override
@@ -98,8 +98,7 @@ class SQLGenerator extends VoidVisitorAdapter<Set<String>> {
 				fileSize = null;
 				lineCount = null;
 			}
-			String fileType = fileTypes.stream().filter(s -> filePath.contains(s.toLowerCase())).findFirst()
-					.orElse("UNKNOW");
+			String fileType = fileTypeDeclear.findType(c).name();
 			String format = String.format(
 					"INSERT INTO BS_SOURCE_LIST (BS, WAR, FILE_NAME, EXT_NAME, PACKAGE, CLASS_NAME, FILE_TYPE, EXTENDS, IMPLEMENTS, FILE_SIZE, LINE_COUNT) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s, %s, %s);",
 					JavaSourceAnalyzer.BS, JavaSourceAnalyzer.WAR, filePath, filePath.substring(filePath.lastIndexOf('.')), packageName, className, fileType, mainParent, mainImplements, fileSize, lineCount);
